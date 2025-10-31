@@ -65,55 +65,54 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Contact form handling
-const contactForm = document.getElementById('contactForm');
-if (contactForm) {
-  contactForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    // Get form data
-    const formData = new FormData(this);
-    const name = formData.get('name') || this.querySelector('#name').value;
-    const email = formData.get('email') || this.querySelector('#email').value;
-    const subject = formData.get('subject') || this.querySelector('#subject').value;
-    const message = formData.get('message') || this.querySelector('#message').value;
-    
-    // Validation
-    if (!name || !email || !subject || !message) {
-      showMessage('Please fill in all fields.', 'error');
-      return;
-    }
-    
-    if (!isValidEmail(email)) {
-      showMessage('Please enter a valid email address.', 'error');
-      return;
-    }
-    
-    // Show loading state
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-    submitBtn.disabled = true;
-    
-    try {
-      // Simulate form submission (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+// Contact Form Handling with Web3Forms
+document.addEventListener('DOMContentLoaded', () => {
+  const contactForm = document.getElementById('contactForm');
+  
+  if (contactForm) {
+    contactForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
       
-      // Show success message
-      showMessage(`Thank you, ${name}! Your message has been sent successfully. I'll get back to you soon.`, 'success');
+      // Show loading state
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
       
-      // Reset form
-      this.reset();
-      
-    } catch (error) {
-      showMessage('Sorry, there was an error sending your message. Please try again.', 'error');
-    } finally {
-      // Reset button state
-      submitBtn.innerHTML = originalText;
-      submitBtn.disabled = false;
-    }
-  });
-}
+      try {
+        const formData = new FormData(this);
+        const response = await fetch(this.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Show success message
+          showMessage('Your message has been sent successfully!', 'success');
+          contactForm.reset();
+        } else {
+          // Show error message from Web3Forms
+          const errorMsg = result.message || 'Failed to send message. Please try again later.';
+          showMessage(errorMsg, 'error');
+          console.error('Web3Forms Error:', result);
+        }
+      } catch (error) {
+        // Show error message
+        showMessage('Failed to send message. Please try again later.', 'error');
+        console.error('Error:', error);
+      } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
+    });
+  }
+});
 
 // Email validation
 function isValidEmail(email) {
